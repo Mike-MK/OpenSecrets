@@ -10,7 +10,6 @@ import java.sql.PreparedStatement;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
-import org.json.simple.parser.ParseException;
 
 /**
  * Hello world!
@@ -20,22 +19,23 @@ import org.json.simple.parser.ParseException;
 public class App {
     private static JSONArray legislator;
 
-    public static void main(String[] args) throws ParseException {
+    public static void main(String[] args){
 
         try {
             // URLConnection urlCon;
-            String apiKey = "803abe5541a16de0d79f2c3503f200cd";
+            String apiKey = "803abe5541a16de0d79f2c3503f200cd";// should be hidden
             URL url = new URL(
                     "http://www.opensecrets.org/api/?method=getLegislators&id=NJ&output=json&apikey=" + apiKey);
+            System.out.println("Fetching data.....");
             HttpURLConnection urlCon = (HttpURLConnection) url.openConnection();
             urlCon.setRequestMethod("GET");
             urlCon.setRequestProperty("Accept", "application/json");
             urlCon.setRequestProperty("User-Agent", "Mozilla/5.0");// add headers to prevent 403 error
 
             if(urlCon.getResponseCode() != 200){
-                throw new RuntimeException("");
-                
+                throw new RuntimeException("Request Unsuccessful");
             }
+            System.out.println("Data fetched successfully");
 
             BufferedReader inputStream = new BufferedReader(new InputStreamReader(urlCon.getInputStream()));
             
@@ -44,10 +44,11 @@ public class App {
 
             while ((line = inputStream.readLine()) != null)
                 sb.append(line);
+
             JSONObject jsonObject = new JSONObject(sb.toString());
 
-            JSONObject result = jsonObject.getJSONObject("response");
-            legislator = result.getJSONArray("legislator");
+            JSONObject response = jsonObject.getJSONObject("response");
+            legislator = response.getJSONArray("legislator");
             
             inputStream.close();
 
@@ -60,13 +61,14 @@ public class App {
         try {
             Class.forName("com.mysql.jdbc.Driver");
 
+            // Use your own
             Connection con = DriverManager.getConnection(
                     "jdbc:mysql://localhost:3306/javatest", "root", "");
             String sql = "INSERT INTO legislator " +
                      "(cid,firstlast,lastname,party,gender,firstelectoff,phone,votesmart_id,feccandid,birthdate)"+
                      "VALUES(?,?,?,?,?,?,?,?,?,?)";
             PreparedStatement stmt = con.prepareStatement(sql);
-            
+            System.out.println("Writing to database...");
             int i=0;
             while(i < legislator.length()){
            
@@ -88,11 +90,12 @@ public class App {
                 i++;
                 if (i % 999 == 0 || i == legislator.length()) {
                     stmt.executeBatch();
-                    i++; // Execute every 999 items.
+                    i++; // batch limit of 999 rows.
                 }
                 
             }
-
+            
+            System.out.println("Database updated. Closing connections...");
             con.close();
 
         } catch (Exception e) {

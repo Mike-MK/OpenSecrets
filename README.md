@@ -2,6 +2,10 @@
 
 Welcome to the VS Code Java world. Here is a guideline to help you get started to write Java code in Visual Studio Code.
 
+## How to Run
+
+Import legislator.sql to your local database named javatest. Add jdbc and org.json jar files to your projects' lib folder. 
+
 ## Folder Structure
 
 The workspace contains two folders by default, where:
